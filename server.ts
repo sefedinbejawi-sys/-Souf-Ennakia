@@ -34,6 +34,23 @@ interface NeighborhoodRank {
   trend: 'up' | 'down' | 'stable';
 }
 
+const REPORT_STATUSES: Report['status'][] = ['قيد المعالجة', 'تم الحل', 'مرفوض'];
+const REPORT_CATEGORIES = ['نفايات صلبة', 'نفايات منزلية', 'حرق عشوائي', 'أتربة وعوائق', 'مخلفات زراعية'];
+
+function isValidStatus(value: unknown): value is Report['status'] {
+  return typeof value === 'string' && REPORT_STATUSES.includes(value as Report['status']);
+}
+
+function cleanText(value: unknown, fallback: string, maxLength: number) {
+  if (typeof value !== 'string') return fallback;
+  return value.trim().slice(0, maxLength) || fallback;
+}
+
+function parseCoordinate(value: unknown, fallback: number, min: number, max: number) {
+  const parsed = typeof value === 'number' ? value : Number(value);
+  return Number.isFinite(parsed) && parsed >= min && parsed <= max ? parsed : fallback;
+}
+
 // Initial seed data for El Oued (سوف)
 let reports: Report[] = [
   {
@@ -113,6 +130,10 @@ async function startServer() {
   const apiKey = process.env.GEMINI_API_KEY;
   const ai = apiKey ? new GoogleGenAI({ apiKey }) : null;
 
+  app.get('/api/health', (_req, res) => {
+    res.json({ status: 'ok', service: 'souf-ennakia', timestamp: new Date().toISOString() });
+  });
+
   // API Routes
   app.get('/api/stats', (req, res) => {
     const totalReports = reports.length + 120; // Simulated historical pool
@@ -135,7 +156,10 @@ async function startServer() {
 
   app.post('/api/reports', async (req, res) => {
     try {
-      const { category, description, lat, lng, neighborhood, reporterName, imageUrl } = req.body;
+      const { category, description, lat, lng, neighborhood, reporterName, imageUrl } = req.body ?? {};
+      const safeCategory = REPORT_CATEGORIES.includes(category) ? category : 'نفايات عامة';
+      const safeNeighborhood = cleanText(neighborhood, 'حي الوادي وسط', 80);
+      const safeDescription = cleanText(description, `بلاغ نظافة جديد في ${safeNeighborhood}`, 500);
 
       let aiAnalysis = 'تم تحليل الصورة بنجاح وتصنيف البلاغ وإرساله للفرقة البلدية المختصة.';
       let severity: 'منخفضة' | 'متوسطة' | 'عالية' | 'حرجة' = 'متوسطة';
@@ -143,8 +167,8 @@ async function startServer() {
       if (ai) {
         try {
           const prompt = `أنت نظام ذكاء اصطناعي لمدينة الوادي (سوف النقية) لتحليل بلاغات النظافة.
-          تصنيف البلاغ: ${category}
-          الوصف: ${description}
+          تصنيف البلاغ: ${safeCategory}
+          الوصف: ${safeDescription}
           قم بتقديم تحليل موجز بالعربية (في حدود 2 جملتين) يوضح خطورة المخلفات والإجراء المقترح للبلدية، وحدد مستوى الخطورة بدقة واحدة من الكلمات التالية حصراً: منخفضة، متوسطة، عالية، حرجة.
           أعط النتيجة بصيغة JSON كالتالي:
           {
@@ -161,7 +185,7 @@ async function startServer() {
           const jsonMatch = text.match(/\{[\s\S]*\}/);
           if (jsonMatch) {
             const parsed = JSON.parse(jsonMatch[0]);
-            if (parsed.severity) severity = parsed.severity;
+            if (['منخفضة', 'متوسطة', 'عالية', 'حرجة'].includes(parsed.severity)) severity = parsed.severity;
             if (parsed.analysis) aiAnalysis = parsed.analysis;
           }
         } catch (aiErr) {
@@ -172,22 +196,22 @@ async function startServer() {
       const newReport: Report = {
         id: `rep-${Date.now()}`,
         imageUrl: imageUrl || 'https://images.unsplash.com/photo-1530587191325-3db32d826c18?auto=format&fit=crop&w=800&q=80',
-        category: category || 'نفايات عامة',
-        description: description || 'بلاغ نظافة جديد',
-        lat: lat ? parseFloat(lat) : 33.3656,
-        lng: lng ? parseFloat(lng) : 6.8614,
-        neighborhood: neighborhood || 'حي الوادي وسط',
+        category: safeCategory,
+        description: safeDescription,
+        lat: parseCoordinate(lat, 33.3656, -90, 90),
+        lng: parseCoordinate(lng, 6.8614, -180, 180),
+        neighborhood: safeNeighborhood,
         severity,
         aiAnalysis,
         status: 'قيد المعالجة',
         createdAt: new Date().toISOString(),
-        reporterName: reporterName || 'مواطن كريم'
+        reporterName: cleanText(reporterName, 'مواطن كريم', 80)
       };
 
       reports.unshift(newReport);
 
       // Update neighborhood stats
-      const nb = neighborhoods.find(n => n.name === neighborhood);
+      const nb = neighborhoods.find(n => n.name === safeNeighborhood);
       if (nb) {
         nb.totalReports += 1;
         nb.points += 25;
@@ -202,19 +226,26 @@ async function startServer() {
 
   app.patch('/api/reports/:id/status', (req, res) => {
     const { id } = req.params;
-    const { status } = req.body;
+    const { status } = req.body ?? {};
+    if (!isValidStatus(status)) {
+      return res.status(400).json({ error: 'حالة البلاغ غير صالحة' });
+    }
     const report = reports.find(r => r.id === id);
     if (!report) {
       return res.status(404).json({ error: 'البلاغ غير موجود' });
     }
 
+    const previousStatus = report.status;
     report.status = status;
-    if (status === 'تم الحل') {
+    if (previousStatus !== 'تم الحل' && status === 'تم الحل') {
       const nb = neighborhoods.find(n => n.name === report.neighborhood);
       if (nb) {
         nb.resolvedCount += 1;
         nb.points += 50;
       }
+    } else if (previousStatus === 'تم الحل' && status !== 'تم الحل') {
+      const nb = neighborhoods.find(n => n.name === report.neighborhood);
+      if (nb) nb.resolvedCount = Math.max(0, nb.resolvedCount - 1);
     }
 
     res.json(report);

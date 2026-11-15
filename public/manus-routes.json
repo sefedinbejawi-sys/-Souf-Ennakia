@@ -1,0 +1,8 @@
+{
+  "routes": [
+    { "path": "/", "title": "سوف النقية" },
+    { "path": "/report", "title": "تقديم بلاغ" },
+    { "path": "/leaderboard", "title": "ترتيب الأحياء" },
+    { "path": "/admin", "title": "لوحة الإدارة" }
+  ]
+}

@@ -11,16 +11,21 @@ import { ReportView } from './views/ReportView';
 import { LeaderboardView } from './views/LeaderboardView';
 import { AdminDashboardView } from './views/AdminDashboardView';
 
+type View = 'home' | 'report' | 'leaderboard' | 'admin';
+
 export default function App() {
-  const [currentView, setCurrentView] = useState('home');
+  const [currentView, setCurrentView] = useState<View>('home');
+  const navigate = (view: string) => {
+    if (['home', 'report', 'leaderboard', 'admin'].includes(view)) setCurrentView(view as View);
+  };
 
   return (
-    <div className="min-h-screen flex flex-col bg-slate-50 text-slate-800 font-['Cairo']" dir="rtl">
-      <Navbar currentView={currentView} setCurrentView={setCurrentView} />
+    <div className="min-h-screen flex flex-col bg-[#f7faf9] text-slate-800 font-['Cairo']" dir="rtl">
+      <Navbar currentView={currentView} setCurrentView={navigate} />
       
       <main className="flex-1">
-        {currentView === 'home' && <HomeView setCurrentView={setCurrentView} />}
-        {currentView === 'report' && <ReportView setCurrentView={setCurrentView} />}
+        {currentView === 'home' && <HomeView setCurrentView={navigate} />}
+        {currentView === 'report' && <ReportView setCurrentView={navigate} />}
         {currentView === 'leaderboard' && <LeaderboardView />}
         {currentView === 'admin' && <AdminDashboardView />}
       </main>
@@ -29,4 +34,3 @@ export default function App() {
     </div>
   );
 }
-

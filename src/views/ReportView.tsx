@@ -316,7 +316,7 @@ export const ReportView: React.FC<ReportViewProps> = ({ setCurrentView }) => {
         <div className="pt-4 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2 text-xs text-slate-500">
             <Sparkles className="w-4 h-4 text-amber-500" />
-            <span>سيتم تحليل الصورة الحية فورياً بواسطة نموذج Gemini 1.5 Pro الذكي.</span>
+            <span>سيتم تحليل البلاغ فورياً بواسطة محرك الذكاء الاصطناعي، مع مراجعة بشرية من فريق البلدية.</span>
           </div>
           <button
             type="submit"

@@ -1,104 +1,71 @@
-import React from 'react';
-import { Sparkles, Trophy, LayoutDashboard, FileText, Home, ShieldCheck, UserCheck } from 'lucide-react';
+import React, { useState } from 'react';
+import { FileText, Home, LayoutDashboard, Menu, Sparkles, Trophy, UserCheck, X } from 'lucide-react';
 
 interface NavbarProps {
   currentView: string;
   setCurrentView: (view: string) => void;
 }
 
+const links = [
+  { id: 'home', label: 'الرئيسية', icon: Home },
+  { id: 'report', label: 'تقديم بلاغ', icon: FileText },
+  { id: 'leaderboard', label: 'ترتيب الأحياء', icon: Trophy },
+];
+
 export const Navbar: React.FC<NavbarProps> = ({ currentView, setCurrentView }) => {
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const isAdminView = currentView === 'admin';
 
+  const navigate = (view: string) => {
+    setCurrentView(view);
+    setIsMenuOpen(false);
+  };
+
   return (
-    <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-emerald-100 shadow-xs">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-20 gap-8">
-          {/* Zone 1: Brand Wordmark */}
-          <button 
-            onClick={() => setCurrentView('home')}
-            className="flex items-center gap-3 text-right group focus:outline-none"
-          >
-            <div className={`w-11 h-11 rounded-2xl flex items-center justify-center text-white shadow-md transition-transform group-hover:scale-105 ${
-              isAdminView ? 'bg-gradient-to-br from-slate-800 to-slate-950' : 'bg-gradient-to-br from-emerald-600 to-emerald-800 shadow-emerald-600/20'
-            }`}>
-              {isAdminView ? <ShieldCheck className="w-6 h-6" /> : <Sparkles className="w-6 h-6" />}
-            </div>
-            <div>
-              <span className="text-xl font-extrabold text-slate-900 tracking-tight block">
-                {isAdminView ? 'بوابة إدارة البلدية' : 'سوف النقية'}
-              </span>
-              <span className="text-xs font-semibold text-emerald-700 block">
-                {isAdminView ? 'النظام المركزي للعمليات' : 'منصة الذكاء الاصطناعي لمدينة الوادي'}
-              </span>
-            </div>
+    <header className="sticky top-0 z-50 border-b border-slate-200/80 bg-white/90 shadow-sm backdrop-blur-xl">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div className="flex min-h-[76px] items-center justify-between gap-4">
+          <button onClick={() => navigate('home')} className="group flex items-center gap-3 text-right focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 rounded-2xl" aria-label="العودة إلى الصفحة الرئيسية">
+            <span className={`flex h-11 w-11 items-center justify-center rounded-2xl text-white shadow-lg transition-transform group-hover:scale-105 ${isAdminView ? 'bg-slate-900' : 'bg-gradient-to-br from-emerald-500 to-teal-700'}`}>
+              {isAdminView ? <LayoutDashboard className="h-5 w-5" /> : <Sparkles className="h-5 w-5" />}
+            </span>
+            <span className="hidden sm:block">
+              <span className="block text-lg font-black tracking-tight text-slate-950">{isAdminView ? 'بوابة البلدية' : 'سوف النقية'}</span>
+              <span className="block text-[11px] font-bold text-emerald-700">{isAdminView ? 'لوحة العمليات الميدانية' : 'مدينة الوادي • منصة بيئية ذكية'}</span>
+            </span>
           </button>
 
-          {/* Zone 2: Navigation Links separated into Citizen vs Admin */}
-          <nav className="hidden md:flex items-center gap-6 text-sm font-semibold">
-            {!isAdminView ? (
-              <div className="flex items-center gap-6 bg-emerald-50/60 px-4 py-2 rounded-2xl border border-emerald-100">
-                <span className="text-xs font-bold text-emerald-800 bg-emerald-200/60 px-2 py-0.5 rounded-md flex items-center gap-1">
-                  <UserCheck className="w-3.5 h-3.5" /> بوابة المواطن
-                </span>
-                <button
-                  onClick={() => setCurrentView('home')}
-                  className={`transition-colors whitespace-nowrap shrink-0 flex items-center gap-1.5 ${
-                    currentView === 'home' ? 'text-emerald-700 font-bold' : 'text-slate-600 hover:text-slate-900'
-                  }`}
-                >
-                  <Home className="w-4 h-4" />
-                  الرئيسية
-                </button>
-                <button
-                  onClick={() => setCurrentView('report')}
-                  className={`transition-colors whitespace-nowrap shrink-0 flex items-center gap-1.5 ${
-                    currentView === 'report' ? 'text-emerald-700 font-bold' : 'text-slate-600 hover:text-slate-900'
-                  }`}
-                >
-                  <FileText className="w-4 h-4" />
-                  تقديم بلاغ (رفع صورة حية)
-                </button>
-                <button
-                  onClick={() => setCurrentView('leaderboard')}
-                  className={`transition-colors whitespace-nowrap shrink-0 flex items-center gap-1.5 ${
-                    currentView === 'leaderboard' ? 'text-emerald-700 font-bold' : 'text-slate-600 hover:text-slate-900'
-                  }`}
-                >
-                  <Trophy className="w-4 h-4" />
-                  ترتيب الأحياء
-                </button>
-              </div>
-            ) : (
-              <div className="flex items-center gap-6 bg-slate-100 px-4 py-2 rounded-2xl border border-slate-200">
-                <span className="text-xs font-bold text-slate-800 bg-slate-200 px-2 py-0.5 rounded-md flex items-center gap-1">
-                  <ShieldCheck className="w-3.5 h-3.5" /> بوابة الإدارة والبلدية
-                </span>
-                <span className="text-xs text-slate-500 font-medium">لوحة تحكم وتدخلات ميدانية</span>
-              </div>
-            )}
+          <nav className="hidden items-center gap-1 rounded-2xl border border-slate-200 bg-slate-50/80 p-1 md:flex" aria-label="التنقل الرئيسي">
+            {!isAdminView && links.map(({ id, label, icon: Icon }) => (
+              <button key={id} onClick={() => navigate(id)} className={`inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold transition-all ${currentView === id ? 'bg-white text-emerald-700 shadow-sm ring-1 ring-slate-200' : 'text-slate-500 hover:bg-white/70 hover:text-slate-900'}`} aria-current={currentView === id ? 'page' : undefined}>
+                <Icon className="h-4 w-4" />
+                {label}
+              </button>
+            ))}
+            {isAdminView && <span className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-bold text-slate-700"><LayoutDashboard className="h-4 w-4" /> متابعة البلاغات والتدخلات</span>}
           </nav>
 
-          {/* Zone 3: Portal Switcher CTA */}
-          <div className="flex items-center gap-3 shrink-0">
-            {!isAdminView ? (
-              <button
-                onClick={() => setCurrentView('admin')}
-                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 border border-slate-200 transition-all whitespace-nowrap"
-              >
-                <ShieldCheck className="w-4 h-4 text-slate-600" />
-                <span>دخول واجهة الإدارة</span>
-              </button>
-            ) : (
-              <button
-                onClick={() => setCurrentView('home')}
-                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 shadow-md transition-all whitespace-nowrap"
-              >
-                <Home className="w-4 h-4" />
-                <span>العودة لواجهة المواطن</span>
-              </button>
-            )}
+          <div className="flex items-center gap-2">
+            <button onClick={() => navigate(isAdminView ? 'home' : 'admin')} className={`hidden items-center gap-2 rounded-xl px-4 py-2.5 text-xs font-black transition-all sm:inline-flex ${isAdminView ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/20 hover:bg-emerald-700' : 'border border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100'}`}>
+              {isAdminView ? <Home className="h-4 w-4" /> : <LayoutDashboard className="h-4 w-4" />}
+              {isAdminView ? 'واجهة المواطن' : 'واجهة الإدارة'}
+            </button>
+            <button onClick={() => setIsMenuOpen((open) => !open)} className="inline-flex h-11 w-11 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-700 md:hidden" aria-label={isMenuOpen ? 'إغلاق القائمة' : 'فتح القائمة'} aria-expanded={isMenuOpen}>
+              {isMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+            </button>
           </div>
         </div>
+
+        {isMenuOpen && (
+          <div className="border-t border-slate-100 py-3 md:hidden">
+            <div className="grid gap-1">
+              {!isAdminView && links.map(({ id, label, icon: Icon }) => (
+                <button key={id} onClick={() => navigate(id)} className={`flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-bold ${currentView === id ? 'bg-emerald-50 text-emerald-700' : 'text-slate-600 hover:bg-slate-50'}`}><Icon className="h-4 w-4" />{label}</button>
+              ))}
+              <button onClick={() => navigate(isAdminView ? 'home' : 'admin')} className="flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-bold text-slate-600 hover:bg-slate-50"><UserCheck className="h-4 w-4" />{isAdminView ? 'العودة لواجهة المواطن' : 'دخول واجهة الإدارة'}</button>
+            </div>
+          </div>
+        )}
       </div>
     </header>
   );

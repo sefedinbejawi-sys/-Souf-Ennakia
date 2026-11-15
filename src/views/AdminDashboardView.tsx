@@ -3,6 +3,8 @@ import { LayoutDashboard, CheckCircle2, Clock, AlertTriangle, MapPin, Search, Fi
 import { Report } from '../types';
 import L from 'leaflet';
 
+const escapeHtml = (value: string) => value.replace(/[&<>'"]/g, (character) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[character] ?? character));
+
 export const AdminDashboardView: React.FC = () => {
   const [reports, setReports] = useState<Report[]>([]);
   const [loading, setLoading] = useState(true);
@@ -60,10 +62,10 @@ export const AdminDashboardView: React.FC = () => {
       const marker = L.marker([rep.lat, rep.lng], { icon: customIcon }).addTo(map);
       marker.bindPopup(`
         <div style="font-family: 'Cairo', sans-serif; text-align: right; direction: rtl; min-width: 200px;">
-          <strong style="color: #0f172a; font-size: 14px;">${rep.neighborhood}</strong>
-          <p style="margin: 4px 0; font-size: 12px; color: #475569;">${rep.category}</p>
+          <strong style="color: #0f172a; font-size: 14px;">${escapeHtml(rep.neighborhood)}</strong>
+          <p style="margin: 4px 0; font-size: 12px; color: #475569;">${escapeHtml(rep.category)}</p>
           <span style="display: inline-block; padding: 2px 8px; border-radius: 9999px; font-size: 10px; font-weight: bold; background: ${rep.status === 'تم الحل' ? '#d1fae5' : '#fef3c7'}; color: ${rep.status === 'تم الحل' ? '#065f46' : '#92400e'};">
-            ${rep.status}
+            ${escapeHtml(rep.status)}
           </span>
         </div>
       `);
